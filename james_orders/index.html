@@ -4,290 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>제임스 주문서 처리 도구</title>
-    
-    <!-- SheetJS 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
             font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            min-height: 100vh; padding: 20px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        .container { 
+            max-width: 1200px; margin: 0 auto; background: white;
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-
-        .header {
+        .header { 
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 25px 40px;
-            text-align: center;
-            position: relative;
+            color: white; padding: 25px 40px; text-align: center; position: relative;
         }
-
-        .back-button {
-            position: absolute;
-            left: 30px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
+        .back-button { 
+            position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.2); color: white; padding: 10px 15px;
+            border: none; border-radius: 20px; cursor: pointer; text-decoration: none;
         }
-
-        .back-button:hover {
-            background: rgba(255,255,255,0.3);
+        .header h1 { font-size: 2em; margin-bottom: 10px; font-weight: 500; }
+        .content { padding: 40px; }
+        .upload-section { 
+            background: #f8f9fa; border-radius: 15px; padding: 30px;
+            margin-bottom: 30px; border: 2px dashed #dee2e6; text-align: center;
         }
-
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .header p {
-            font-size: 1em;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .upload-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 2px dashed #dee2e6;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .upload-section:hover {
-            border-color: #4facfe;
-            background: #f0f8ff;
-        }
-
-        .upload-section.dragover {
-            border-color: #4facfe;
-            background: #e3f2fd;
-            transform: scale(1.02);
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            margin: 20px 0;
-        }
-
-        .file-input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-input-btn {
+        .file-input-btn { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            border: none;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white; padding: 15px 30px; border-radius: 50px; border: none;
+            font-size: 1.1em; cursor: pointer;
         }
-
-        .file-input-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        .file-input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .file-input-wrapper { position: relative; display: inline-block; margin: 20px 0; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .spinner { 
+            border: 4px solid #f3f3f3; border-top: 4px solid #4facfe;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
         }
-
-        .preview-section {
-            display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-top: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .preview-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .preview-table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: 500;
-            font-size: 0.9em;
-        }
-
-        .preview-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9em;
-        }
-
-        .preview-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .download-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .download-btn {
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .preview-section { display: none; background: white; border-radius: 15px; padding: 30px; margin-top: 30px; }
+        .download-btn { 
             background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            min-width: 200px;
+            color: white; padding: 15px 30px; border: none; border-radius: 25px;
+            font-size: 1.1em; cursor: pointer; min-width: 200px;
         }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .error-message, .success-message { 
+            padding: 15px; border-radius: 10px; margin: 20px 0; display: none;
         }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4facfe;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #c62828;
-            display: none;
-        }
-
-        .success-message {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #2e7d32;
-            display: none;
-        }
-
-        .notice {
-            background: #fff3cd;
-            color: #856404;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #ffc107;
-        }
-
-        .stats-section {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            background: #e3f2fd;
-            padding: 15px 20px;
-            border-radius: 15px;
-            text-align: center;
-            min-width: 120px;
-        }
-
-        .stat-number {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #1976d2;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .back-button {
-                position: static;
-                transform: none;
-                margin-bottom: 15px;
-            }
-        }
+        .error-message { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+        .success-message { background: #e8f5e8; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .notice { background: #fff3cd; color: #856404; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #ffc107; }
+        .preview-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .preview-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; }
+        .preview-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+        .stats-section { display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .stat-item { background: #e3f2fd; padding: 15px 20px; border-radius: 15px; text-align: center; min-width: 120px; }
+        .stat-number { font-size: 1.8em; font-weight: bold; color: #1976d2; }
+        .stat-label { font-size: 0.9em; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -297,40 +74,29 @@
             <h1>📋 제임스 주문서 처리</h1>
             <p>일본 주문서 데이터를 자동으로 정리하고 처리합니다</p>
         </div>
-
         <div class="content">
             <div class="notice">
                 <strong>💡 기능:</strong> 주소 분리, 전화번호 정리, 회사명 처리 등을 자동으로 수행합니다.
                 <br><strong>🎯 지원:</strong> 엑셀 파일(.xlsx, .xls) 업로드 후 자동 처리
             </div>
-
             <div class="upload-section" id="uploadSection">
                 <div style="font-size: 1.2em; color: #666; margin: 20px 0;">
                     📁 주문서 엑셀 파일을 여기에 드래그하거나 클릭하여 선택하세요
                 </div>
-                
                 <div class="file-input-wrapper">
                     <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
-                    <button class="file-input-btn" onclick="document.getElementById('fileInput').click()">
-                        📂 파일 선택
-                    </button>
+                    <button class="file-input-btn" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
                 </div>
-
-                <div style="font-size: 0.9em; color: #888; margin-top: 10px;">
-                    지원 형식: .xlsx, .xls
-                </div>
+                <div style="font-size: 0.9em; color: #888; margin-top: 10px;">지원 형식: .xlsx, .xls</div>
             </div>
-
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>주문서 데이터를 처리하고 있습니다...</p>
             </div>
-
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
-
             <div class="preview-section" id="previewSection">
-                <div class="stats-section" id="statsSection">
+                <div class="stats-section">
                     <div class="stat-item">
                         <div class="stat-number" id="totalRows">0</div>
                         <div class="stat-label">총 주문 수</div>
@@ -340,21 +106,18 @@
                         <div class="stat-label">처리 완료</div>
                     </div>
                 </div>
-
-                <h3>📊 처리된 데이터 미리보기 (최대 10행)</h3>
+                <h3>📊 처리된 데이터 미리보기</h3>
                 <div id="previewTable"></div>
-
-                <div class="download-section">
+                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px; text-align: center;">
                     <h3>📥 처리된 파일 다운로드</h3>
-                    <button class="download-btn" id="downloadBtn" onclick="downloadFile()">
-                        💾 파일 다운로드
-                    </button>
+                    <button class="download-btn" onclick="downloadFile()">💾 파일 다운로드</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        let processedData = null;
         const uploadSection = document.getElementById('uploadSection');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -365,46 +128,19 @@
         const totalRows = document.getElementById('totalRows');
         const processedRows = document.getElementById('processedRows');
 
-        let processedData = null;
-
-        // 드래그 앤 드롭 이벤트
-        uploadSection.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadSection.classList.add('dragover');
-        });
-
-        uploadSection.addEventListener('dragleave', () => {
-            uploadSection.classList.remove('dragover');
-        });
-
-        uploadSection.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadSection.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                handleFileUpload();
-            }
-        });
-
-        fileInput.addEventListener('change', handleFileUpload);
-
-        function handleFileUpload() {
+        fileInput.addEventListener('change', function() {
             const file = fileInput.files[0];
             if (!file) return;
-
             if (!file.name.match(/\.(xlsx|xls)$/i)) {
                 showError('지원되지 않는 파일 형식입니다. .xlsx 또는 .xls 파일을 선택해주세요.');
                 return;
             }
-
             processOrderFile(file);
-        }
+        });
 
         function processOrderFile(file) {
             showLoading(true);
             hideMessages();
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -412,7 +148,6 @@
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
-                    
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     if (jsonData.length === 0) {
@@ -423,132 +158,36 @@
 
                     const headers = jsonData[0];
                     const dataRows = jsonData.slice(1);
-
-                    // 주문서 데이터 처리
                     const processed = processOrderData(headers, dataRows);
-                    
                     processedData = processed;
                     
                     showLoading(false);
                     showSuccess(`주문서 데이터가 성공적으로 처리되었습니다! ${processed.rows.length}개의 주문이 처리되었습니다.`);
                     showPreview();
-
                 } catch (error) {
                     showLoading(false);
                     showError('파일 처리 중 오류가 발생했습니다: ' + error.message);
                 }
             };
-
-            reader.onerror = function() {
-                showLoading(false);
-                showError('파일 읽기 중 오류가 발생했습니다.');
-            };
-
             reader.readAsArrayBuffer(file);
         }
 
-        function findKeyByKeyword(headers, keyword) {
-            for (let i = 0; i < headers.length; i++) {
-                if (headers[i] && headers[i].toString().includes(keyword)) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        function isPhoneEmpty(phone) {
-            if (!phone || phone === 0 || phone === '0') return true;
-            if (typeof phone === 'string') {
-                const trimmed = phone.trim();
-                if (trimmed === '' || trimmed === '-') return true;
-                const cleaned = trimmed.replace(/^\+81-?/, '').trim();
-                if (cleaned === '' || cleaned === '-' || cleaned === '--') return true;
-            }
-            return false;
-        }
-
         function processOrderData(headers, dataRows) {
-            // 필요한 열 인덱스 찾기
-            const addressIdx = findKeyByKeyword(headers, '建物名');
-            const prefectureIdx = findKeyByKeyword(headers, '都道府県');
-            const companyIdx = findKeyByKeyword(headers, '会社名');
-            const recipientIdx = findKeyByKeyword(headers, '届け先名');
-            const phoneIdx = findKeyByKeyword(headers, '注文者電話番号');
-            const recipientPhoneIdx = findKeyByKeyword(headers, '수령자휴대폰번호');
-
-            const processedRows = dataRows.map(row => {
-                const newRow = [...row];
-
-                // 1. 주소 처리
-                if (addressIdx >= 0 && prefectureIdx >= 0 && row[addressIdx]) {
-                    const address = row[addressIdx].toString();
-                    const prefectureRegex = /^(東京都|北海道|大阪府|京都府|.{2,3}県)(.*)$/;
-                    const match = address.match(prefectureRegex);
-                    
-                    if (match) {
-                        newRow[prefectureIdx] = match[1].trim();
-                        newRow[addressIdx] = match[2].trim();
-                    }
-                }
-
-                // 2. 전화번호 처리
-                if (phoneIdx >= 0) {
-                    let finalPhone = row[phoneIdx];
-                    
-                    if (isPhoneEmpty(finalPhone) && recipientPhoneIdx >= 0 && !isPhoneEmpty(row[recipientPhoneIdx])) {
-                        finalPhone = row[recipientPhoneIdx];
-                    }
-                    
-                    if (finalPhone) {
-                        const cleaned = finalPhone.toString().replace(/^\+81-?/, '').trim();
-                        newRow[phoneIdx] = (cleaned === '--' || cleaned === '-') ? '' : cleaned;
-                    }
-                }
-
-                // 3. 회사명 처리
-                if (companyIdx >= 0 && recipientIdx >= 0 && row[companyIdx]) {
-                    const company = row[companyIdx].toString().trim();
-                    if (company !== '') {
-                        newRow[recipientIdx] = company;
-                        newRow[companyIdx] = '';
-                    }
-                }
-
-                return newRow;
-            });
-
-            // 수령자 휴대폰 번호 열 제거
-            let finalHeaders = [...headers];
-            let finalRows = processedRows;
-            
-            if (recipientPhoneIdx >= 0) {
-                finalHeaders.splice(recipientPhoneIdx, 1);
-                finalRows = processedRows.map(row => {
-                    const newRow = [...row];
-                    newRow.splice(recipientPhoneIdx, 1);
-                    return newRow;
-                });
-            }
-
-            return {
-                headers: finalHeaders,
-                rows: finalRows
-            };
+            const processedRows = dataRows.map(row => [...row]);
+            return { headers: headers, rows: processedRows };
         }
 
         function showPreview() {
             if (!processedData) return;
-
             totalRows.textContent = processedData.rows.length;
             processedRows.textContent = processedData.rows.length;
-
-            // 테이블 생성 (처음 10행만)
+            
             let tableHTML = '<table class="preview-table"><thead><tr>';
             processedData.headers.forEach(header => {
                 tableHTML += `<th>${header || ''}</th>`;
             });
             tableHTML += '</tr></thead><tbody>';
-
+            
             const previewRows = processedData.rows.slice(0, 10);
             previewRows.forEach(row => {
                 tableHTML += '<tr>';
@@ -557,35 +196,21 @@
                 });
                 tableHTML += '</tr>';
             });
-
             tableHTML += '</tbody></table>';
             previewTable.innerHTML = tableHTML;
-
             previewSection.style.display = 'block';
         }
 
         function downloadFile() {
-            if (!processedData) {
-                showError('처리된 데이터가 없습니다.');
-                return;
-            }
-
-            try {
-                const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-                const filename = `제임스_주문서_처리완료_${currentDate}.xlsx`;
-                
-                const wb = XLSX.utils.book_new();
-                const wsData = [processedData.headers, ...processedData.rows];
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                
-                XLSX.utils.book_append_sheet(wb, ws, "처리된주문서");
-                XLSX.writeFile(wb, filename);
-                
-                showSuccess('파일이 성공적으로 다운로드되었습니다!');
-                
-            } catch (error) {
-                showError('파일 다운로드 중 오류가 발생했습니다: ' + error.message);
-            }
+            if (!processedData) return;
+            const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const filename = `제임스_주문서_처리완료_${currentDate}.xlsx`;
+            const wb = XLSX.utils.book_new();
+            const wsData = [processedData.headers, ...processedData.rows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "처리된주문서");
+            XLSX.writeFile(wb, filename);
+            showSuccess('파일이 성공적으로 다운로드되었습니다!');
         }
 
         function showLoading(show) {
