@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스윗회사 메일 발송 도구</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .mail-form {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 1em;
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto 0;
+            min-width: 200px;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .template-section {
+            background: #e3f2fd;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .template-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+        .template-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .template-btn {
+            background: white;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .template-btn:hover {
+            background: #1976d2;
+            color: white;
+        }
+
+        .notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .back-button {
+                position: static;
+                transform: none;
+                margin-bottom: 15px;
+            }
+
+            .template-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../" class="back-button">← 메인으로</a>
+            <h1>📧 스윗회사 메일 발송</h1>
+            <p>업무용 메일을 빠르게 작성하고 발송하세요</p>
+        </div>
+
+        <div class="content">
+            <div class="notice">
+                <strong>💡 사용법:</strong> 아래 폼을 작성하고 "메일 보내기"를 클릭하면 기본 메일 프로그램이 열립니다.
+                <br><strong>🎯 장점:</strong> 가입 불필요, 개인정보 안전, 바로 사용 가능
+            </div>
+
+            <div class="template-section">
+                <div class="template-title">📋 빠른 템플릿</div>
+                <div class="template-buttons">
+                    <button class="template-btn" onclick="setTemplate('업무보고')">업무 보고</button>
+                    <button class="template-btn" onclick="setTemplate('회의요청')">회의 요청</button>
+                    <button class="template-btn" onclick="setTemplate('자료요청')">자료 요청</button>
+                    <button class="template-btn" onclick="setTemplate('문의사항')">문의 사항</button>
+                    <button class="template-btn" onclick="setTemplate('에러신고')">에러 신고</button>
+                </div>
+            </div>
+
+            <div class="mail-form">
+                <div class="form-group">
+                    <label class="form-label">📧 받는 사람 (이메일)</label>
+                    <input type="email" id="toEmail" class="form-input" placeholder="example@company.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📝 제목</label>
+                    <input type="text" id="subject" class="form-input" placeholder="메일 제목을 입력하세요" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">💬 내용</label>
+                    <textarea id="message" class="form-textarea" placeholder="메일 내용을 입력하세요..." required></textarea>
+                </div>
+
+                <button class="send-button" onclick="sendEmail()">
+                    📤 메일 보내기
+                </button>
+            </div>
+
+            <div style="text-align: center; color: #666; font-size: 0.9em; margin-top: 20px;">
+                <p>💡 <strong>참고:</strong> 기본 메일 프로그램(Outlook, 메일 앱 등)이 설치되어 있어야 합니다.</p>
+                <p>🔒 <strong>보안:</strong> 모든 정보는 로컬에서 처리되며 외부로 전송되지 않습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setTemplate(type) {
+            const subjectInput = document.getElementById('subject');
+            const messageInput = document.getElementById('message');
+            
+            const templates = {
+                '업무보고': {
+                    subject: '[업무보고] ',
+                    message: `안녕하세요.
+
+다음과 같이 업무 현황을 보고드립니다.
+
+■ 진행 사항:
+- 
+
+■ 완료 사항:
+- 
+
+■ 이슈 사항:
+- 
+
+■ 다음 계획:
+- 
+
+감사합니다.`
+                },
+                '회의요청': {
+                    subject: '[회의요청] ',
+                    message: `안녕하세요.
+
+다음 안건으로 회의 요청드립니다.
+
+■ 회의 목적:
+- 
+
+■ 참석자:
+- 
+
+■ 희망 일시:
+- 
+
+■ 예상 소요시간:
+- 
+
+■ 안건:
+1. 
+
+감사합니다.`
+                },
+                '자료요청': {
+                    subject: '[자료요청] ',
+                    message: `안녕하세요.
+
+업무 진행을 위해 다음 자료를 요청드립니다.
+
+■ 필요 자료:
+- 
+
+■ 사용 목적:
+- 
+
+■ 필요 시점:
+- 
+
+■ 추가 요청사항:
+- 
+
+감사합니다.`
+                },
+                '문의사항': {
+                    subject: '[문의] ',
+                    message: `안녕하세요.
+
+다음 사항에 대해 문의드립니다.
+
+■ 문의 내용:
+- 
+
+■ 현재 상황:
+- 
+
+■ 기대하는 답변:
+- 
+
+감사합니다.`
+                },
+                '에러신고': {
+                    subject: '[에러신고] ',
+                    message: `안녕하세요.
+
+시스템 에러가 발생하여 신고드립니다.
+
+■ 발생 시간:
+- 
+
+■ 발생 위치:
+- 
+
+■ 에러 내용:
+- 
+
+■ 재현 방법:
+1. 
+
+■ 스크린샷:
+- (첨부)
+
+감사합니다.`
+                }
+            };
+
+            if (templates[type]) {
+                subjectInput.value = templates[type].subject;
+                messageInput.value = templates[type].message;
+                
+                // 제목 입력란에 포커스
+                subjectInput.focus();
+                subjectInput.setSelectionRange(subjectInput.value.length, subjectInput.value.length);
+            }
+        }
+
+        function sendEmail() {
+            const toEmail = document.getElementById('toEmail').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            if (!toEmail || !subject || !message) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            // 이메일 형식 검증
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(toEmail)) {
+                alert('올바른 이메일 주소를 입력해주세요.');
+                return;
+            }
+
+            // 메일 내용을 URL 인코딩
+            const encodedSubject = encodeURIComponent(subject);
+            const encodedMessage = encodeURIComponent(message);
+            
+            // mailto 링크 생성
+            const mailtoLink = `mailto:${toEmail}?subject=${encodedSubject}&body=${encodedMessage}`;
+            
+            // 기본 메일 프로그램 실행
+            window.location.href = mailtoLink;
+            
+            // 성공 메시지
+            setTimeout(() => {
+                alert('메일 프로그램이 실행되었습니다!\n내용을 확인하고 발송해주세요.');
+            }, 500);
+        }
+
+        // 엔터키로 전송 방지 (실수 방지)
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+
+        // 페이지 로드 시 받는 사람 입력란에 포커스
+        window.addEventListener('load', function() {
+            document.getElementById('toEmail').focus();
+        });
+    </script>
+</body>
+</html>
