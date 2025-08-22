@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 배송업체별 엑셀 분리 도구</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-section:hover {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .upload-section.dragover {
+            border-color: #ff6b6b;
+            background: #fff0f0;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff9a56 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .company-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .company-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-stats {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .download-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 배송업체별 엑셀 분리 도구</h1>
+            <p>네코포스와 유우팩을 자동으로 분리하여 2개 파일로 다운로드</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <div class="info-title">🔍 지원 기능</div>
+                <ul>
+                    <li>📊 <strong>배송업체 자동 인식</strong>: ネコポス, ゆうパック 자동 분류</li>
+                    <li>📋 <strong>헤더 매핑</strong>: 주문번호, 송장번호 자동 변환</li>
+                    <li>💾 <strong>2개 파일 생성</strong>: 네코포스용, 유우팩용 각각 다운로드</li>
+                    <li>📈 <strong>실시간 통계</strong>: 각 배송업체별 데이터 개수 표시</li>
+                </ul>
+            </div>
+
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📁</div>
+                <h3>엑셀 파일을 업로드하세요</h3>
+                <p>파일을 드래그 앤 드롭하거나 버튼을 클릭하세요</p>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+                <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                    📂 파일 선택
+                </button>
+                <br>
+                <input type="text" id="companyName" class="company-input" placeholder="업체명을 입력하세요" value="업체">
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <h3>파일을 분석 중입니다...</h3>
+                <p>잠시만 기다려주세요</p>
+            </div>
+
+            <div class="message error-message" id="errorMessage"></div>
+            <div class="message success-message" id="successMessage"></div>
+
+            <div class="results" id="results">
+                <div class="result-card" id="nekoposCard">
+                    <div class="result-title">
+                        🐾 네코포스 (ネコポス)
+                        <span id="nekoposCount" style="background: #28a745; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em;"></span>
+                    </div>
+                    <div class="result-stats" id="nekoposStats"></div>
+                    <button class="download-button" onclick="downloadNekopos()">📥 네코포스 다운로드</button>
+                    <button class="upload-button" onclick="togglePreview('nekopos')">👀 미리보기</button>
+                    <div id="nekoposPreview" style="display: none;"></div>
+                </div>
+
+                <div class="result-card" id="yupackCard">
+                    <div class="result-title">
+                        📮 유우팩 (ゆうパック)
+                        <span id="yupackCount" style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em;"></span>
+                    </div>
+                    <div class="result-stats" id="yupackStats"></div>
+                    <button class="download-button" onclick="downloadYupack()">📥 유우팩 다운로드</button>
+                    <button class="upload-button" onclick="togglePreview('yupack')">👀 미리보기</button>
+                    <div id="yupackPreview" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalData = null;
+        let nekoposData = [];
+        let yupackData = [];
+        let headerMapping = {};
+
+        // DOM 요소들
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const companyName = document.getElementById('companyName');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // 드래그 앤 드롭 이벤트
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload();
+            }
+        });
+
+        // 파일 선택 이벤트
+        fileInput.addEventListener('change', handleFileUpload);
+
+        function handleFileUpload() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showError('지원되지 않는 파일 형식입니다. .xlsx 또는 .xls 파일을 선택해주세요.');
+                return;
+            }
+
+            processExcelFile(file);
+        }
+
+        function processExcelFile(file) {
+            showLoading(true);
+            hideMessages();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // JSON으로 변환
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length === 0) {
+                        showError('엑셀 파일에 데이터가 없습니다.');
+                        showLoading(false);
+                        return;
+                    }
+
+                    // 헤더 추출
+                    const headers = jsonData[0];
+                    const dataRows = jsonData.slice(1);
+
+                    console.log('=== 원본 헤더 ===');
+                    console.log(headers);
+
+                    // 헤더 매핑 감지
+                    headerMapping = detectHeaders(headers);
+                    
+                    console.log('=== 헤더 매핑 결과 ===');
+                    console.log(headerMapping);
+
+                    if (!headerMapping.orderNumber || !headerMapping.invoiceNumber) {
+                        showError(`필수 헤더를 찾을 수 없습니다.<br><br>현재 파일의 헤더:<br>${headers.map((header, index) => `${String.fromCharCode(65 + index)}열: ${header}`).join('<br>')}<br><br>필요한 헤더:<br>주문번호: お客様管理番号, 注文番号, 管理번호, 주문번호<br>송장번호: 伝票番号, 発送번号, 配送번号, 운송장번호, 송장번호`);
+                        showLoading(false);
+                        return;
+                    }
+
+                    // 배송업체 구분 컬럼 찾기
+                    const shippingColumn = findShippingColumn(headers, dataRows);
+                    
+                    if (!shippingColumn) {
+                        showError('배송업체 정보를 찾을 수 없습니다.<br><br>ネコポス, ゆうパック 정보가 포함된 컬럼이 필요합니다.<br>AM열, 에러 체크 결과 등의 컬럼을 확인해주세요.');
+                        showLoading(false);
+                        return;
+                    }
+
+                    console.log('=== 배송업체 컬럼 ===');
+                    console.log(`컬럼: ${shippingColumn.name} (${String.fromCharCode(65 + shippingColumn.index)}열)`);
+
+                    // 데이터 분리
+                    separateDataByShipping(headers, dataRows, shippingColumn);
+
+                    // 결과 표시
+                    displayResults();
+                    showLoading(false);
+
+                } catch (error) {
+                    console.error('파일 처리 오류:', error);
+                    showError('파일 처리 중 오류가 발생했습니다: ' + error.message);
+                    showLoading(false);
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function detectHeaders(headers) {
+            const mapping = {};
+            
+            // 주문번호 매핑
+            const orderPatterns = ['お客様管理番号', '注文番号', '管理番号', '주문번호'];
+            const orderIndex = headers.findIndex(header => 
+                orderPatterns.some(pattern => 
+                    String(header).includes(pattern)
+                )
+            );
+            if (orderIndex !== -1) {
+                mapping.orderNumber = { index: orderIndex, name: headers[orderIndex] };
+            }
+
+            // 송장번호 매핑
+            const invoicePatterns = ['伝票番号', '発送番号', '配送번号', '운송장번호', '송장번호', '배송번호', '발송번호'];
+            const invoiceIndex = headers.findIndex(header => 
+                invoicePatterns.some(pattern => 
+                    String(header).includes(pattern)
+                )
+            );
+            if (invoiceIndex !== -1) {
+                mapping.invoiceNumber = { index: invoiceIndex, name: headers[invoiceIndex] };
+            }
+
+            return mapping;
+        }
+
+        function findShippingColumn(headers, dataRows) {
+            // 배송업체 관련 키워드
+            const shippingKeywords = ['에러 체크', '배송회사', '운송회사', '택배회사', '배송사구분', '편집 05'];
+            
+            // 1. 헤더에서 배송업체 관련 컬럼 찾기
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]);
+                
+                // AM열 체크 (27번째 열) 또는 "편집 05" 헤더
+                if (i === 26 || header.includes('AM') || header.includes('편집 05')) {
+                    // 해당 열에서 배송업체 데이터 확인
+                    const hasShippingData = dataRows.some(row => {
+                        const value = String(row[i] || '');
+                        return value.includes('ネコポス') || value.includes('ゆうパック');
+                    });
+                    
+                    if (hasShippingData) {
+                        return { index: i, name: header };
+                    }
+                }
+                
+                // 키워드 매칭
+                if (shippingKeywords.some(keyword => header.includes(keyword))) {
+                    // 해당 컬럼에서 배송업체 데이터 확인
+                    const hasShippingData = dataRows.some(row => {
+                        const value = String(row[i] || '');
+                        return value.includes('ネコポス') || value.includes('ゆうパック');
+                    });
+                    
+                    if (hasShippingData) {
+                        return { index: i, name: header };
+                    }
+                }
+            }
+
+            // 2. 데이터에서 배송업체 정보가 있는 컬럼 찾기
+            for (let i = 0; i < headers.length; i++) {
+                const hasNeko = dataRows.some(row => String(row[i] || '').includes('ネコポス'));
+                const hasYu = dataRows.some(row => String(row[i] || '').includes('ゆうパック'));
+                
+                if (hasNeko || hasYu) {
+                    return { index: i, name: headers[i] };
+                }
+            }
+
+            return null;
+        }
+
+        function separateDataByShipping(headers, dataRows, shippingColumn) {
+            nekoposData = [];
+            yupackData = [];
+
+            dataRows.forEach(row => {
+                const shippingValue = String(row[shippingColumn.index] || '');
+                
+                // 데이터 변환
+                const convertedRow = {
+                    '주문번호': row[headerMapping.orderNumber.index] || '',
+                    '송장번호': row[headerMapping.invoiceNumber.index] || ''
+                };
+
+                if (shippingValue.includes('ネコポス')) {
+                    nekoposData.push(convertedRow);
+                } else if (shippingValue.includes('ゆうパック')) {
+                    yupackData.push(convertedRow);
+                }
+            });
+
+            console.log(`=== 분리 결과 ===`);
+            console.log(`네코포스: ${nekoposData.length}개`);
+            console.log(`유우팩: ${yupackData.length}개`);
+        }
+
+        function displayResults() {
+            // 카운트 표시
+            document.getElementById('nekoposCount').textContent = `${nekoposData.length}개`;
+            document.getElementById('yupackCount').textContent = `${yupackData.length}개`;
+
+            // 통계 표시
+            document.getElementById('nekoposStats').textContent = 
+                `총 ${nekoposData.length}개의 네코포스 주문이 분리되었습니다.`;
+            document.getElementById('yupackStats').textContent = 
+                `총 ${yupackData.length}개의 유우팩 주문이 분리되었습니다.`;
+
+            results.style.display = 'block';
+            
+            if (nekoposData.length === 0 && yupackData.length === 0) {
+                showError('배송업체 데이터를 찾을 수 없습니다. 파일에 ネコポス 또는 ゆうパック 정보가 있는지 확인해주세요.');
+            } else {
+                showSuccess(`성공! 네코포스 ${nekoposData.length}개, 유우팩 ${yupackData.length}개로 분리되었습니다.`);
+            }
+        }
+
+        function downloadNekopos() {
+            if (nekoposData.length === 0) {
+                showError('네코포스 데이터가 없습니다.');
+                return;
+            }
+
+            // YYMMDD 형식으로 날짜 생성
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${yy}${mm}${dd}`;
+            
+            const filename = `아이템캐리_네코포스_${dateStr}.xlsx`;
+            
+            downloadExcelFile(nekoposData, filename, '네코포스');
+        }
+
+        function downloadYupack() {
+            if (yupackData.length === 0) {
+                showError('유우팩 데이터가 없습니다.');
+                return;
+            }
+
+            // YYMMDD 형식으로 날짜 생성
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${yy}${mm}${dd}`;
+            
+            const filename = `아이템캐리_유우팩_${dateStr}.xlsx`;
+            
+            downloadExcelFile(yupackData, filename, '유우팩');
+        }
+
+        function downloadExcelFile(data, filename, type) {
+            try {
+                // 워크북 생성
+                const wb = XLSX.utils.book_new();
+                
+                // 데이터 준비
+                const wsData = [
+                    ['주문번호', '송장번호'], // 헤더
+                    ...data.map(row => [row['주문번호'], row['송장번호']])
+                ];
+                
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                
+                // 워크북에 워크시트 추가
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                
+                // 파일 다운로드
+                XLSX.writeFile(wb, filename);
+                
+                showSuccess(`${type} 파일이 성공적으로 다운로드되었습니다!`);
+                
+            } catch (error) {
+                showError(`${type} 파일 다운로드 중 오류가 발생했습니다: ` + error.message);
+            }
+        }
+
+        function togglePreview(type) {
+            const previewDiv = document.getElementById(type + 'Preview');
+            const data = type === 'nekopos' ? nekoposData : yupackData;
+            
+            if (previewDiv.style.display === 'none') {
+                // 미리보기 생성
+                const table = createPreviewTable(data);
+                previewDiv.innerHTML = table;
+                previewDiv.style.display = 'block';
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        }
+
+        function createPreviewTable(data) {
+            if (data.length === 0) return '<p>데이터가 없습니다.</p>';
+            
+            const maxRows = Math.min(data.length, 5); // 최대 5행만 표시
+            
+            let html = '<table class="preview-table"><thead><tr>';
+            html += '<th>주문번호</th><th>송장번호</th>';
+            html += '</tr></thead><tbody>';
+            
+            for (let i = 0; i < maxRows; i++) {
+                const row = data[i];
+                html += '<tr>';
+                html += `<td>${row['주문번호']}</td>`;
+                html += `<td>${row['송장번호']}</td>`;
+                html += '</tr>';
+            }
+            
+            html += '</tbody></table>';
+            
+            if (data.length > 5) {
+                html += `<p style="margin-top: 10px; color: #666;">... 외 ${data.length - 5}개 더</p>`;
+            }
+            
+            return html;
+        }
+
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            uploadSection.style.display = show ? 'none' : 'block';
+            if (show) {
+                results.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            errorMessage.innerHTML = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
