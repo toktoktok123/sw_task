@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 스윗회사 업무 도구</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 50px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 60px;
+        }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .task-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .task-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border-color: #4facfe;
+            background: #ffffff;
+        }
+
+        .task-icon {
+            font-size: 5em;
+            margin-bottom: 25px;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+        }
+
+        .task-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .task-description {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .task-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 35px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .task-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .stats-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .stats-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        .footer-info {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            color: #666;
+        }
+
+        .footer-info p {
+            margin: 8px 0;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 30px;
+            }
+            
+            .header {
+                padding: 30px;
+            }
+            
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .task-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .task-card {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 스윗회사 업무 도구</h1>
+            <p>다양한 업무를 효율적으로 처리할 수 있는 통합 웹 도구입니다</p>
+        </div>
+
+        <div class="content">
+            <div class="stats-section">
+                <h2 class="stats-title">📊 업무 현황</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">활성 업무 도구</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">서비스 운영</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">웹 기반</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">설치 필요</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-grid">
+                <!-- 제임스 엑셀 변환 -->
+                <div class="task-card" onclick="location.href='james/'">
+                    <div class="task-icon">📊</div>
+                    <div class="task-title">제임스 엑셀 변환</div>
+                    <div class="task-description">
+                        일본어 헤더(お客様管理番号, 伝票番号)를 한국어로 변환하여<br>
+                        A열(주문번호), B열(송장번호)로 깔끔하게 정리합니다.<br>
+                        <strong>✨ Python 설치 불필요, 브라우저에서 바로 사용</strong>
+                    </div>
+                    <a href="james/" class="task-button">🚀 변환 시작하기</a>
+                </div>
+
+                <!-- 새 업무 추가 준비 -->
+                <div class="task-card" style="opacity: 0.6; cursor: not-allowed;" title="준비 중...">
+                    <div class="task-icon">🔧</div>
+                    <div class="task-title">새 업무 도구</div>
+                    <div class="task-description">
+                        추가 업무 도구가 필요하시면<br>
+                        IT팀으로 요청해주세요.<br>
+                        <strong>🎯 맞춤형 도구 개발 가능</strong>
+                    </div>
+                    <div class="task-button" style="background: #ccc; cursor: not-allowed;">준비 중</div>
+                </div>
+            </div>
+
+            <div class="footer-info">
+                <p>📞 <strong>문의사항</strong>이 있으시면 스윗회사 IT팀으로 연락해주세요</p>
+                <p>🔧 <strong>새로운 업무 도구</strong>가 필요하시면 언제든 요청해주세요</p>
+                <p>💡 <strong>개선 사항</strong>이나 <strong>버그 신고</strong>도 환영합니다</p>
+                <hr style="margin: 20px 0; border: none; height: 1px; background: #ddd;">
+                <p style="font-size: 0.9em; color: #999;">
+                    🏢 <strong>스윗회사 IT팀</strong> | 최종 업데이트: 2025년 8월 22일
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 카드 클릭 효과
+        document.querySelectorAll('.task-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // 비활성화된 카드는 클릭 방지
+                if (this.style.opacity === '0.6') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        // 통계 애니메이션
+        function animateNumbers() {
+            const numbers = document.querySelectorAll('.stat-number');
+            numbers.forEach(number => {
+                const target = number.textContent;
+                if (!isNaN(target)) {
+                    let current = 0;
+                    const increment = target / 30;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            number.textContent = target;
+                            clearInterval(timer);
+                        } else {
+                            number.textContent = Math.floor(current);
+                        }
+                    }, 50);
+                }
+            });
+        }
+
+        // 페이지 로드 시 애니메이션 실행
+        window.addEventListener('load', () => {
+            setTimeout(animateNumbers, 500);
+        });
+    </script>
+</body>
+</html>
