@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국제송장파일 변환</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-center: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #ff9a56;
+        }
+        
+        .header p {
+            text-align: center;
+            color: #e0e0e0;
+            font-size: 1.1em;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ff9a56;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #ff9a56;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .selected-file {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 154, 86, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .preview-table {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .preview-table h3 {
+            margin-bottom: 15px;
+            color: #ff9a56;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background: rgba(255, 154, 86, 0.2);
+            font-weight: bold;
+            color: #ff9a56;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #ff9a56;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 국제송장파일 변환</h1>
+            <p>엑셀 파일을 업로드하여 주문번호와 송장번호가 포함된 새 파일로 변환하세요</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p>파일을 드래그 앤 드롭하거나 클릭하여 업로드하세요</p>
+            <p style="font-size: 0.9em; margin-top: 10px; color: #ccc;">XLSX 또는 XLS 파일</p>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+        </div>
+        
+        <div class="selected-file" id="selectedFile">
+            <strong>선택된 파일:</strong> <span id="fileName"></span>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>처리 중...</p>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary" id="previewBtn" disabled>미리보기 생성</button>
+            <button class="btn btn-primary" id="downloadBtn" disabled>다운로드</button>
+            <button class="btn btn-secondary" id="clearBtn" disabled>초기화</button>
+        </div>
+        
+        <div class="message" id="message" style="display: none;"></div>
+        
+        <div class="preview-table" id="previewTable">
+            <h3>📊 미리보기</h3>
+            <div id="tableContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let processedData = null;
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFileDiv = document.getElementById('selectedFile');
+        const fileName = document.getElementById('fileName');
+        const loading = document.getElementById('loading');
+        const previewBtn = document.getElementById('previewBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const message = document.getElementById('message');
+        const previewTable = document.getElementById('previewTable');
+        const tableContainer = document.getElementById('tableContainer');
+        
+        // 파일 업로드 영역 클릭
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // 파일 선택
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        // 드래그 앤 드롭
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // 파일 선택 처리
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            selectedFileDiv.style.display = 'block';
+            previewBtn.disabled = false;
+            clearBtn.disabled = false;
+            hideMessage();
+            hidePreview();
+        }
+        
+        // 미리보기 생성
+        previewBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            showLoading(true);
+            hideMessage();
+            
+            try {
+                processedData = await processExcelFile(selectedFile);
+                showPreview(processedData);
+                showMessage('미리보기가 생성되었습니다. 다운로드 버튼을 클릭하여 파일을 다운로드하세요.', 'success');
+                downloadBtn.disabled = false;
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        // 다운로드
+        downloadBtn.addEventListener('click', () => {
+            if (!processedData) return;
+            
+            try {
+                downloadExcelFile(processedData);
+                showMessage('파일 다운로드가 완료되었습니다!', 'success');
+            } catch (error) {
+                showMessage('다운로드 중 오류가 발생했습니다: ' + error.message, 'error');
+            }
+        });
+        
+        // 초기화
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            processedData = null;
+            fileInput.value = '';
+            selectedFileDiv.style.display = 'none';
+            previewTable.style.display = 'none';
+            previewBtn.disabled = true;
+            downloadBtn.disabled = true;
+            clearBtn.disabled = true;
+            hideMessage();
+        });
+        
+        // 엑셀 파일 처리
+        function processExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                if (typeof XLSX === 'undefined') {
+                    reject(new Error('XLSX 라이브러리가 로드되지 않았습니다.'));
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        if (jsonData.length === 0) {
+                            reject(new Error('엑셀 파일에 데이터가 없습니다.'));
+                            return;
+                        }
+                        
+                        const firstRow = jsonData[0];
+                        if (!('주문번호' in firstRow) || !('접수번호' in firstRow)) {
+                            reject(new Error("필수 컬럼('주문번호', '접수번호')을 찾을 수 없습니다. 엑셀 파일의 헤더를 확인해주세요."));
+                            return;
+                        }
+                        
+                        const processedData = [['주문번호', '송장번호']];
+                        jsonData.forEach(row => {
+                            const orderNumber = row['주문번호'] ? String(row['주문번호']) : '';
+                            const trackingNumber = row['접수번호'] ? String(row['접수번호']) : '';
+                            processedData.push([orderNumber, trackingNumber]);
+                        });
+                        
+                        resolve(processedData);
+                    } catch (error) {
+                        reject(new Error(`엑셀 파일 처리 중 오류: ${error.message}`));
+                    }
+                };
+                
+                reader.onerror = () => {
+                    reject(new Error('파일 읽기 중 오류가 발생했습니다.'));
+                };
+                
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        // 파일명 생성
+        function getFormattedFileName() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `국제발송_${year}${month}${day}.xlsx`;
+        }
+        
+        // 엑셀 파일 다운로드
+        function downloadExcelFile(data) {
+            if (typeof XLSX === 'undefined') {
+                throw new Error('XLSX 라이브러리를 로드할 수 없습니다.');
+            }
+            
+            const fileName = getFormattedFileName();
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+            XLSX.writeFile(workbook, fileName);
+        }
+        
+        // 미리보기 표시
+        function showPreview(data) {
+            if (!data || data.length < 1) return;
+            
+            const header = data[0];
+            const rows = data.slice(1);
+            const maxRows = Math.min(rows.length, 20);
+            const displayedRows = rows.slice(0, maxRows);
+            
+            let tableHTML = '<table>';
+            
+            // 헤더
+            tableHTML += '<thead><tr>';
+            header.forEach(cell => {
+                tableHTML += `<th>${cell}</th>`;
+            });
+            tableHTML += '</tr></thead>';
+            
+            // 데이터 행
+            tableHTML += '<tbody>';
+            displayedRows.forEach(row => {
+                tableHTML += '<tr>';
+                row.forEach(cell => {
+                    tableHTML += `<td>${cell}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</tbody></table>';
+            
+            if (rows.length > maxRows) {
+                tableHTML += `<p style="text-align: center; margin-top: 15px; color: #ccc;">... 외 ${rows.length - maxRows}개의 행이 더 있습니다.</p>`;
+            }
+            
+            tableContainer.innerHTML = tableHTML;
+            previewTable.style.display = 'block';
+        }
+        
+        // 미리보기 숨기기
+        function hidePreview() {
+            previewTable.style.display = 'none';
+        }
+        
+        // 로딩 표시
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            previewBtn.disabled = show;
+            downloadBtn.disabled = show;
+            clearBtn.disabled = show;
+        }
+        
+        // 메시지 표시
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
+        
+        // 메시지 숨기기
+        function hideMessage() {
+            message.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
